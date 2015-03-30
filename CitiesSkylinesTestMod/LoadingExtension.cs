@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using CitiesSkylinesNoDespawnMod.VehicleAIMod;
 using ColossalFramework.Plugins;
 using ICities;
@@ -11,7 +10,7 @@ namespace CitiesSkylinesNoDespawnMod
 {
     public class LoadingExtension : LoadingExtensionBase
     {
-        private static Toggler toggler;
+        private static DespawnControl _despawnControl;
         public override void OnLevelLoaded(LoadMode mode)
         {
             if (mode != LoadMode.LoadGame && mode != LoadMode.NewGame)
@@ -20,17 +19,17 @@ namespace CitiesSkylinesNoDespawnMod
             DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Loading NoDespawn mod");
 
             GameObject gameObject = new GameObject("NoDespawnToggler");
-            LoadingExtension.toggler = gameObject.AddComponent<Toggler>();
+            _despawnControl = gameObject.AddComponent<DespawnControl>();
 
             UpdateVehicleInformation();
         }
 
         public override void OnLevelUnloading()
         {
-            if (LoadingExtension.toggler != null)
+            if (_despawnControl != null)
             {
-                GameObject.Destroy(LoadingExtension.toggler.gameObject);
-                LoadingExtension.toggler = null;
+                GameObject.Destroy(_despawnControl.gameObject);
+                _despawnControl = null;
             }
         }
 
@@ -117,9 +116,6 @@ namespace CitiesSkylinesNoDespawnMod
                 bf.SetValue(b, kvp.Value);
                 DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Set value " + kvp.Key + " to " + kvp.Value);
             }
-
         }
-
-
     }
 }

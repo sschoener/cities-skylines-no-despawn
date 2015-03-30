@@ -1,13 +1,12 @@
-﻿using ColossalFramework;
+﻿using System.Collections;
 using ColossalFramework.Plugins;
 using UnityEngine;
 
 namespace CitiesSkylinesNoDespawnMod
 {
-    class Toggler : MonoBehaviour
+    class DespawnControl : MonoBehaviour
     {
-
-        private static bool despawn = false;
+        private static bool _despawn;
 
         private bool CtrlCmdDown
         {
@@ -28,16 +27,16 @@ namespace CitiesSkylinesNoDespawnMod
 
         private void Update()
         {
-            if (this.CtrlCmdDown && this.ShiftDown && Input.GetKeyDown(KeyCode.D))
+            if (CtrlCmdDown && ShiftDown && Input.GetKeyDown(KeyCode.D))
             {
-                despawn = !despawn;
-                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Toggled despawning to " + (despawn ? "enabled" : "disabled"));
+                _despawn = !_despawn;
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Toggled despawning to " + (_despawn ? "enabled" : "disabled"));
             }
         }
 
         public static bool Despawn
         {
-            get { return despawn; }
+            get { return _despawn; }
         }
     }
 }
