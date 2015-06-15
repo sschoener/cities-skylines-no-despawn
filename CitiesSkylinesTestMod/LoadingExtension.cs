@@ -11,6 +11,19 @@ namespace CitiesSkylinesNoDespawnMod
     public class LoadingExtension : LoadingExtensionBase
     {
         private static DespawnControl _despawnControl;
+        private readonly Dictionary<string, VehicleAI> _originalAIs = new Dictionary<string, VehicleAI>();
+
+        private void ResetVehicleAI(VehicleInfo vi)
+        {
+            VehicleAI ai;
+            if (_originalAIs.TryGetValue(vi.name, out ai))
+            {
+                var tmp = vi.m_vehicleAI;
+                vi.m_vehicleAI = ai;
+                UnityEngine.Object.Destroy(tmp);
+            }
+        }
+		
         public override void OnLevelLoaded(LoadMode mode)
         {
             if (mode != LoadMode.LoadGame && mode != LoadMode.NewGame)
@@ -31,6 +44,9 @@ namespace CitiesSkylinesNoDespawnMod
                 GameObject.Destroy(_despawnControl.gameObject);
                 _despawnControl = null;
             }
+            int num = PrefabCollection<VehicleInfo>.PrefabCount();
+            for (uint i = 0; i < num; i++)
+                ResetVehicleAI(PrefabCollection<VehicleInfo>.GetPrefab(i));
         }
 
         public void UpdateVehicleInformation()
@@ -45,7 +61,7 @@ namespace CitiesSkylinesNoDespawnMod
             for (uint i = 0; i < num; i++)
             {
                 var vi = PrefabCollection<VehicleInfo>.GetPrefab(i);
-                AdjustVehicleAI(vi, mapping);
+                _originalAIs[vi.name] = AdjustVehicleAI(vi, mapping);
             }
         }
 
@@ -56,14 +72,14 @@ namespace CitiesSkylinesNoDespawnMod
                 DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, f.Name + ": " + f.GetValue(a));
         }
 
-        private void AdjustVehicleAI(VehicleInfo vi, Dictionary<Type, Type> componentRemap)
+        private VehicleAI AdjustVehicleAI(VehicleInfo vi, Dictionary<Type, Type> componentRemap)
         {
             // make sure vehicle AI is set at all
             var oldAI = vi.GetComponent<VehicleAI>();
             if (oldAI == null)
             {
                 DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Aborting, AI for vehicle is null");
-                return;
+                return null;
             }
 
             // try to get new AI type for currently set type
@@ -72,12 +88,12 @@ namespace CitiesSkylinesNoDespawnMod
             if (!componentRemap.TryGetValue(compType, out newCompType))
             {
                 DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Did not patch vehicle info for type " + compType);
-                return;
+                return null;
             }
 
             // pull fields from old AI and destroy it
             var fields = ExtractFields(oldAI);
-            Object.DestroyImmediate(oldAI);
+            
 
             // create new AI and add it to the game
             VehicleAI newAI = vi.gameObject.AddComponent(newCompType) as VehicleAI;
@@ -88,6 +104,7 @@ namespace CitiesSkylinesNoDespawnMod
             vi.m_vehicleAI = newAI;
             newAI.InitializeAI();
             DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Successfully patched vehicle info for type " + compType + " with " + newCompType);
+			return oldAI;
         }
 
         private Dictionary<string, object> ExtractFields(object a)
