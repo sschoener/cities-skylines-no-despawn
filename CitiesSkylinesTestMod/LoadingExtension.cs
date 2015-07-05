@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using CitiesSkylinesNoDespawnMod.VehicleAIMod;
 using ColossalFramework.Plugins;
 using ICities;
-using Object = UnityEngine.Object;
 using GameObject = UnityEngine.GameObject;
 
 namespace CitiesSkylinesNoDespawnMod
@@ -33,20 +33,36 @@ namespace CitiesSkylinesNoDespawnMod
 
             GameObject gameObject = new GameObject("NoDespawnToggler");
             _despawnControl = gameObject.AddComponent<DespawnControl>();
-
-            UpdateVehicleInformation();
+            try
+            {
+                UpdateVehicleInformation();
+            }
+            catch (Exception ex)
+            {
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Error, ex.Message);
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Error, ex.StackTrace);
+            }
         }
 
         public override void OnLevelUnloading()
         {
+            DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Unloading NoDespawn mod");
             if (_despawnControl != null)
             {
                 GameObject.Destroy(_despawnControl.gameObject);
                 _despawnControl = null;
             }
-            int num = PrefabCollection<VehicleInfo>.PrefabCount();
-            for (uint i = 0; i < num; i++)
-                ResetVehicleAI(PrefabCollection<VehicleInfo>.GetPrefab(i));
+            try
+            {
+                int num = PrefabCollection<VehicleInfo>.PrefabCount();
+                for (uint i = 0; i < num; i++)
+                    ResetVehicleAI(PrefabCollection<VehicleInfo>.GetPrefab(i));
+            }
+            catch (Exception ex)
+            {
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Error, ex.Message);
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Error, ex.StackTrace);
+            }
         }
 
         public void UpdateVehicleInformation()
@@ -61,7 +77,9 @@ namespace CitiesSkylinesNoDespawnMod
             for (uint i = 0; i < num; i++)
             {
                 var vi = PrefabCollection<VehicleInfo>.GetPrefab(i);
-                _originalAIs[vi.name] = AdjustVehicleAI(vi, mapping);
+                var old = AdjustVehicleAI(vi, mapping);
+                if (old != null)
+                    _originalAIs[vi.name] = old;
             }
         }
 
@@ -131,7 +149,7 @@ namespace CitiesSkylinesNoDespawnMod
                     continue;
                 }
                 bf.SetValue(b, kvp.Value);
-                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Set value " + kvp.Key + " to " + kvp.Value);
+                //DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Set value " + kvp.Key + " to " + kvp.Value);
             }
         }
     }
